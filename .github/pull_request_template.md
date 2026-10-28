@@ -12,7 +12,7 @@ Closes #
 
 <!-- Commands you ran and what they printed. `pnpm check` at minimum. -->
 
-## Dlaczego tak
+## Why
 
 <!-- Why these choices. Plain language. Compare with a familiar alternative when you have one. -->
 

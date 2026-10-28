@@ -62,7 +62,7 @@ The summary is short and imperative, with no trailing period. The pull request t
 - While the lock exists, approved tests are a contract. Change one only together with a spec change the owner approved.
 - Bug fixes start with a regression test that fails on `main`, then the fix.
 - Purely visual UI: do not force a unit test. Name the browser check instead.
-- Remove `.claude/tests.lock` only at the end of `/pr-ready`, after the reviewer passes.
+- Remove `.claude/tests.lock` at the end of `/pr-ready`, or earlier after the owner approves a spec change the tests must follow. While the lock exists, the hook blocks test edits. The steps are in `docs/workflow.md`.
 - The owner merges. Agents do not merge.
 
 ## Definition of done
@@ -70,7 +70,7 @@ The summary is short and imperative, with no trailing period. The pull request t
 - The spec's acceptance criteria are implemented and covered by the approved tests.
 - `pnpm check` exits 0. For a user-facing flow, `pnpm e2e` or a named manual check is in the PR.
 - The diff does not edit approved test files unless the owner approved a spec change that those tests follow.
-- PR title matches the issue title. The body contains `Closes #N` and the sections Spec, What changed, Evidence, Dlaczego tak, Risk, Out of scope.
+- PR title matches the issue title. The body contains `Closes #N` and the sections Spec, What changed, Evidence, Why, Risk, Out of scope.
 
 ## Structure
 

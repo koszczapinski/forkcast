@@ -9,6 +9,6 @@ Issue, pull request, and commit titles use `<type>: <summary>` (`feat`, `fix`, `
 
 Do not start unless the owner has set `spec:approved` and `agent:ready`. After that, follow `docs/workflow.md`: the reviewer accepts the red tests, then implement. `risk:high` waits for the owner's test approval. Never add or remove `agent:ready`, `spec:approved`, or `risk:*`. Never merge.
 
-While `.claude/tests.lock` exists, do not edit or weaken approved tests. A bug fix starts with a regression test that fails on `main`.
+While `.claude/tests.lock` exists, do not edit tests. After the owner approves a spec change, delete the lock, edit the spec and the tests together, then lock again. A bug fix starts with a regression test that fails on `main`.
 
 The stop hook runs the same `pnpm check` as CI. If it sends you back, fix the code.

@@ -4,7 +4,7 @@ globs: "**/*.{test,spec}.{ts,tsx}"
 alwaysApply: false
 ---
 
-Approved tests are a contract once `.claude/tests.lock` exists. Do not edit or weaken them. Change an approved test only together with a spec change the owner has approved. If the spec did not change, stop and report.
+Approved tests are a contract once `.claude/tests.lock` exists. The hook blocks edits while that file exists. After the owner approves a spec change, delete the lock, change the spec and the tests together, then lock again. If the spec did not change, stop and report.
 
 Test behaviour, not markup. A bug fix starts with a regression test that fails on `main`.
 

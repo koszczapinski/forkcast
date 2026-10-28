@@ -12,6 +12,8 @@ You get a spec path, a list of changed files, and which pass this is.
 
 Tests pass (before `.claude/tests.lock`):
 
+The spec path is an input. It does not have to appear in the diff. The new test files are the change. Do not fail because the spec file is unchanged.
+
 - Every acceptance criterion has at least one test.
 - The tests fail for the right reason (missing behaviour, not a typo or a bad import). Use the failure summary you were given. Do not ask for a full log.
 - The tests assert behaviour, not implementation.
@@ -19,9 +21,7 @@ Tests pass (before `.claude/tests.lock`):
 Implementation pass (before the pull request):
 
 - Every acceptance criterion is implemented, and a test covers it.
-- Approved test files were not modified after the `test:` commit.
-
-Either pass: if a test file changed and the spec file did not, fail. An approved test changes only together with a spec change the owner approved.
+- If a test file changed and the spec file did not, fail. If both changed, check that the tests match the new spec. Do not fail a test edit that ships with that spec change.
 
 If `package.json` or `pnpm-lock.yaml` adds a dependency that `docs/tech-stack.md` does not allow, fail. Name the package. `@tanstack/react-query` and `zustand` fail unless the spec states the need that file requires. A v0.2 or v0.3 package fails before that version's ticket. Adding a package that is not on the list is `risk:high`.
 

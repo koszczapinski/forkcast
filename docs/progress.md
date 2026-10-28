@@ -1,6 +1,6 @@
 # Progress
 
-An unattended run reads this file first and updates it before stopping. One `agent:ready` issue at a time, one pull request each, at most five issues in a run. Stop at the first blocker. The next session resumes the current issue. The rules are in `docs/workflow.md`.
+The copy of this file on `main` is the template. The live notes are on the current issue branch. An unattended session reads that branch before it starts a new issue. Status is empty here. A live file uses `in progress`, `blocked`, or `done`. The rules are in `docs/workflow.md`.
 
 ## Current
 

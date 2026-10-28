@@ -29,7 +29,7 @@ fi
 
 case "$file" in
   *.test.ts|*.test.tsx|*.test.js|*.test.jsx|*.test.mjs|*.spec.ts|*.spec.tsx|*.spec.js|*.spec.jsx|*.spec.mjs|*/__tests__/*)
-    message="Tests are locked. Change an approved test only together with a spec change the owner has approved. Do not edit or weaken it."
+    message="Tests are locked, so this edit is refused. After the owner approves a spec change, delete .claude/tests.lock, then edit the spec and the tests together. Do not edit tests while the lock exists."
     echo "$message" >&2
     HOOK_MESSAGE="$message" node --input-type=module -e 'process.stdout.write(JSON.stringify({ permission: "deny", user_message: process.env.HOOK_MESSAGE, agent_message: process.env.HOOK_MESSAGE }) + "\n")'
     exit 2

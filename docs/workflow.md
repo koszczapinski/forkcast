@@ -32,9 +32,9 @@ flowchart TD
 6. **Small steps.** One step at a time. While the lock file exists, a PreToolUse hook blocks edits to test files.
 7. **Quality gate.** When the agent tries to stop, a hook runs `pnpm check` (types, lint, unit tests). Red: the hook returns exit 2 and only the failure lines, and the agent keeps working. The gate stays off until the lock exists, so the red test-first step is not forced green early.
 8. **Review the diff.** The same read-only reviewer checks the implementation against the spec. It fails the diff when a test file changed and the spec did not, and when a new dependency is not allowed by `docs/tech-stack.md`.
-9. **Pull request.** `/pr-ready` opens the pull request. The title is the issue title. The body contains `Closes #N`. If a draft already exists, update that pull request and mark it ready. The owner merges.
+9. **Pull request.** `/pr-ready` runs after implementation, when `.claude/tests.lock` exists. It does not run on a `risk:high` draft that is still waiting for the owner. The title is the issue title. The body contains `Closes #N` and the sections Spec, What changed, Evidence, Why, Risk, Out of scope. If that approved work already has a draft, update it and mark it ready. The owner merges.
 
-An approved test changes only together with a spec change the owner has approved. While `.claude/tests.lock` exists, the hook still refuses test edits. After the owner approves the spec change, the tests may be updated to match that spec, and the reviewer checks them again. A test change with no spec change is a fail.
+An approved test changes only together with a spec change the owner has approved. While `.claude/tests.lock` exists, the hook refuses every test edit. The owner's approval does not open the hook. Delete the lock, update the spec and the tests in the same change, ask the reviewer to check those tests, then create the lock again before more implementation. `/pr-ready` also deletes the lock after the pull request is open. Do not delete the lock to make a red suite pass. A test change with no spec change is a fail.
 
 Agents never add or remove `agent:ready`, `spec:approved`, or `risk:*`, and they never merge.
 
@@ -97,16 +97,18 @@ Cursor uses the same scripts. Its stop hook sends a follow-up message instead of
 
 ## Models and cost
 
-Use a cheap model for review and for mechanical test writing from a finished spec. Use a strong model for implementation, architecture, hard bugs, and AI prompts.
+Use a cheap model for review. Use a strong model for a run that implements, and for architecture, hard bugs, and AI prompts.
 
-| Work                                      | Model                                                                 |
-| ----------------------------------------- | --------------------------------------------------------------------- |
-| Review of red tests, or of the diff       | Cheap. Claude Code: `model: haiku` in `.claude/agents/reviewer.md`    |
-| Mechanical tests from a finished spec     | Cheap                                                                 |
-| Implementation, architecture, hard bugs   | Strong                                                                |
-| AI prompts                                | Strong, and the work is `risk:high`                                   |
+A default `/tdd` run writes the tests and implements in the same agent. That agent is the strong model. The reviewer is a different agent and stays cheap. A cheap model writes mechanical tests only when that agent does not implement. Cursor chooses the model once per agent, so do not assign a cheap model to the run that also implements.
 
-Cursor does not read `model:` from the Claude agent file. In Cursor the model is chosen per agent, when that agent starts. Pick a cheap model for a review agent and for an agent that only writes tests from a finished spec. Pick a strong model for an agent that implements.
+| Work                                                         | Model                                                                                          |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Review of red tests, or of the diff                          | Cheap. Claude Code: `model: haiku` in `.claude/agents/reviewer.md`. Cursor: the reviewer agent |
+| `/tdd` through implementation, architecture, hard bugs       | Strong. One model for that whole agent                                                        |
+| Mechanical tests from a finished spec, and no implementation | Cheap                                                                                          |
+| AI prompts                                                   | Strong, and the work is `risk:high`                                                            |
+
+Cursor does not read `model:` from the Claude agent file. In Cursor the model is chosen per agent, when that agent starts.
 
 `pnpm check` and `pnpm e2e` run the suites. CI runs them again. The model does not read a full passing log. A local run keeps the failure summary only (failing names and assertion errors). Hooks print nothing when the command passes. On failure they return only the failure lines.
 
@@ -114,11 +116,15 @@ Cursor does not read `model:` from the Claude agent file. In Cursor the model is
 
 A night queue takes issues labeled `agent:ready` one at a time. Each issue gets its own pull request. A run opens at most five pull requests, then stops even when more issues are ready.
 
-The run follows `/tdd` and then `/pr-ready` for that issue. It does not wait for a person to type the slash command. The owner already set `agent:ready`.
+`docs/progress.md` on `main` is the empty template. The live notes are on the current issue branch. Before taking a new issue, read `docs/progress.md` from the open pull request that was updated most recently. Resume that branch only when its status is `blocked` or `in progress`. An empty status is the template. `done` means that issue's pull request is open and the queue may take the next issue. When a pull request merges, keep the template from `main`.
 
-It stops at the first blocker and does not start the next issue. A blocker is a missing spec, a reviewer fail after two rounds, tests that stay red for the wrong reason, `risk:high` waiting on the owner's test approval, or a red `pnpm check` the agent cannot fix.
+On a default issue, follow `/tdd` (tests, reviewer, lock, implementation) and then `/pr-ready`. The owner already set `agent:ready`. Do not wait for a slash command.
 
-Before it stops, it writes the current issue, status, branch, pull request, blocker, and next step into `docs/progress.md`, then commits and pushes that file on the issue branch. The next session reads that file first and resumes the same issue, including one that is still blocked. If nothing is in progress, it takes the lowest `agent:ready` issue number.
+If `/tdd` stops, the run stops. That includes a reviewer fail after two rounds and a `risk:high` draft waiting for the owner's test approval. Do not run `/pr-ready` after that stop. `/pr-ready` would treat the intentional red suite as a bug to fix and would mark the draft ready before the owner has approved the tests.
+
+Other blockers are a missing spec, tests that stay red for the wrong reason, and a red `pnpm check` the agent cannot fix. Do not start the next issue.
+
+Before it stops, write the current issue, status, branch, pull request, blocker, and next step into `docs/progress.md` on that issue branch, commit it, and push the branch. The next session reads that branch, not the template on `main`.
 
 ## Tests, with judgment
 
