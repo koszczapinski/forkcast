@@ -1,0 +1,44 @@
+# Source of truth for the Forkcast workflow labels.
+# These labels already exist on the repository. This file documents them.
+# It does not create or edit labels, and CI must not sync them: a sync
+# workflow would need permission to change issues.
+
+- name: type:feature
+  color: "1d76db"
+  description: New user-facing functionality
+
+- name: type:bug
+  color: "d73a4a"
+  description: Something is broken; fix starts with a failing regression test
+
+- name: type:chore
+  color: "c5def5"
+  description: Tooling, config, refactor, docs
+
+- name: needs-spec
+  color: "fbca04"
+  description: Acceptance criteria missing or not yet reviewed
+
+- name: spec:approved
+  color: "0e8a16"
+  description: Spec and acceptance criteria approved by the owner
+
+- name: agent:ready
+  color: "5319e7"
+  description: "Owner only: an agent may start work. Agents never set this label"
+
+- name: agent:cursor
+  color: "000000"
+  description: Assigned to a Cursor agent
+
+- name: agent:claude
+  color: "d97757"
+  description: Assigned to Claude Code
+
+- name: risk:low
+  color: "bfdadc"
+  description: Small, well-tested change; candidate for auto-merge later
+
+- name: risk:high
+  color: "b60205"
+  description: Touches harness, CI, AI prompts, schema, deps or secrets; owner review required

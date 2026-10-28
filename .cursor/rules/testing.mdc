@@ -1,0 +1,11 @@
+---
+description: Approved tests are a contract
+globs: "**/*.{test,spec}.{ts,tsx}"
+alwaysApply: false
+---
+
+Approved tests are a contract once `.claude/tests.lock` exists. Do not edit or weaken them. If a test is wrong, stop and ask.
+
+Test behaviour, not markup. A bug fix starts with a regression test that fails on `main`.
+
+Component tests that need HTTP register handlers with `server.use` from `src/test/msw/server.ts`.

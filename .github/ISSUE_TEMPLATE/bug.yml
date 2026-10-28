@@ -1,0 +1,43 @@
+name: Bug
+description: Report a bug. The fix starts with a failing regression test.
+title: "fix: "
+labels:
+  - "type:bug"
+  - "needs-spec"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep the title in the form `fix: <short imperative summary>` (for example `fix: Plan ignores nut allergy`). The first test commit must fail on `main`. An agent does not start until the owner adds `spec:approved` and then `agent:ready`.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, account state, or "local dev" if that is all you know.
+    validations:
+      required: true
+  - type: textarea
+    id: regression-test
+    attributes:
+      label: Regression test
+      description: Which test must fail first, and what it asserts.
+    validations:
+      required: true
