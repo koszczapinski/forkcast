@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type FormEvent, type RefObject } from "react";
+import { useEffect, type FormEvent } from "react";
 import { flushSync } from "react-dom";
 import { useForm, useFormContext, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -140,11 +140,7 @@ function AllergiesField() {
   );
 }
 
-function ServingsField({
-  inputRef,
-}: {
-  inputRef: RefObject<HTMLInputElement | null>;
-}) {
+function ServingsField() {
   const form = useFormContext<FormValues>();
 
   return (
@@ -157,10 +153,6 @@ function ServingsField({
           <FormControl>
             <Input
               {...field}
-              ref={(element) => {
-                field.ref(element);
-                inputRef.current = element;
-              }}
               type="text"
               inputMode="numeric"
               autoComplete="off"
@@ -173,11 +165,7 @@ function ServingsField({
   );
 }
 
-function BudgetField({
-  inputRef,
-}: {
-  inputRef: RefObject<HTMLInputElement | null>;
-}) {
+function BudgetField() {
   const form = useFormContext<FormValues>();
 
   return (
@@ -190,10 +178,6 @@ function BudgetField({
           <FormControl>
             <Input
               {...field}
-              ref={(element) => {
-                field.ref(element);
-                inputRef.current = element;
-              }}
               type="text"
               inputMode="decimal"
               autoComplete="off"
@@ -212,8 +196,6 @@ export function MealPreferencesForm() {
     defaultValues,
     shouldFocusError: true,
   });
-  const servingsRef = useRef<HTMLInputElement>(null);
-  const budgetRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const stored = readStoredPreferences();
@@ -250,13 +232,7 @@ export function MealPreferencesForm() {
 
       const firstInvalid = FOCUS_ORDER.find((field) => messages.has(field));
       if (firstInvalid) {
-        // setFocus waits for a timer. Focus the field in this turn as well.
         form.setFocus(firstInvalid);
-        if (firstInvalid === "servings") {
-          servingsRef.current?.focus();
-        } else if (firstInvalid === "budget") {
-          budgetRef.current?.focus();
-        }
       }
       return;
     }
@@ -272,8 +248,8 @@ export function MealPreferencesForm() {
       <form className="flex flex-col gap-5" onSubmit={savePreferences}>
         <DietField />
         <AllergiesField />
-        <ServingsField inputRef={servingsRef} />
-        <BudgetField inputRef={budgetRef} />
+        <ServingsField />
+        <BudgetField />
         <Button type="submit" className="self-start">
           Save preferences
         </Button>
