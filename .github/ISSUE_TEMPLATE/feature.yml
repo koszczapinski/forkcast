@@ -1,0 +1,57 @@
+name: Feature
+description: Start a feature with a spec and acceptance criteria.
+title: "feat: "
+labels:
+  - "type:feature"
+  - "needs-spec"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep the title in the form `feat: <short imperative summary>` (for example `feat: Meal preferences form`). An agent does not start until the owner adds `spec:approved` and then `agent:ready`.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should be true for the person using Forkcast when this is done?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Numbered and testable. Given/When/Then is encouraged. One behaviour per item.
+      placeholder: |
+        1. Given a vegetarian diner, when they save preferences, then meat dishes are absent from the week.
+    validations:
+      required: true
+  - type: textarea
+    id: edge-cases
+    attributes:
+      label: Edge cases
+      description: Boundaries, empty input, conflicts. Write "None" if there are none.
+    validations:
+      required: true
+  - type: textarea
+    id: tests-first
+    attributes:
+      label: Tests first
+      description: Which acceptance criterion maps to which test type (unit, component, e2e).
+      placeholder: |
+        1. Criterion 1 -> unit test of the preference filter.
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this issue will not change. Write "None" if the goal is the whole change.
+    validations:
+      required: true
+  - type: textarea
+    id: depends-on
+    attributes:
+      label: Depends on
+      description: Issue numbers this waits on, or "None".
+    validations:
+      required: true

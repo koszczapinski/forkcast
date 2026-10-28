@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": ".claude/hooks/protect-tests.sh",
+        "matcher": "Write|Edit|StrReplace|Delete"
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": ".cursor/hooks/lint-file.sh",
+        "matcher": "Write|Edit|StrReplace"
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/quality-gate.sh",
+        "loop_limit": 5,
+        "timeout": 300
+      }
+    ]
+  }
+}
