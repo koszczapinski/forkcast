@@ -7,8 +7,8 @@ Read `AGENTS.md` before changing product code. `pnpm check` is the definition of
 
 Issue, pull request, and commit titles use `<type>: <summary>` (`feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `ci`). A pull request title matches its issue and the body contains `Closes #N`. `/issue` lives in `.claude/skills/issue/SKILL.md`.
 
-Do not start implementation unless the owner has set `spec:approved` and `agent:ready`. Never add or remove `agent:ready`, `spec:approved`, or `risk:*`. Never merge.
+Do not start unless the owner has set `spec:approved` and `agent:ready`. After that, follow `docs/workflow.md`: the reviewer accepts the red tests, then implement. `risk:high` waits for the owner's test approval. Never add or remove `agent:ready`, `spec:approved`, or `risk:*`. Never merge.
 
-While `.claude/tests.lock` exists, do not edit or weaken approved tests. A bug fix starts with a regression test that fails on `main`.
+While `.claude/tests.lock` exists, do not edit tests. After the owner approves a spec change, delete the lock, edit the spec and the tests together, then lock again. A bug fix starts with a regression test that fails on `main`.
 
 The stop hook runs the same `pnpm check` as CI. If it sends you back, fix the code.

@@ -12,12 +12,12 @@ Closes #
 
 <!-- Commands you ran and what they printed. `pnpm check` at minimum. -->
 
-## Dlaczego tak
+## Why
 
 <!-- Why these choices. Plain language. Compare with a familiar alternative when you have one. -->
 
 ## Risk
 
-<!-- `risk:low` or `risk:high`. High when the diff touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, schemas, dependencies, or secrets. Only the owner applies the label. -->
+<!-- `risk:low` or `risk:high`. High when the diff touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, auth, payments, schemas, dependencies, or secrets. Only the owner applies the label. -->
 
 ## Out of scope

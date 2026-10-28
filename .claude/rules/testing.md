@@ -8,7 +8,7 @@ paths:
 
 # Tests
 
-Approved tests are a contract once `.claude/tests.lock` exists. Do not edit or weaken them to make a task look done. If a test is wrong, stop and ask.
+Approved tests are a contract once `.claude/tests.lock` exists. The hook blocks edits while that file exists. After the owner approves a spec change, delete the lock, change the spec and the tests together, then lock again. If the spec did not change, stop and report. The reviewer fails a test change with no spec change.
 
 Test behaviour. A bug fix starts with a regression test that fails on `main`.
 

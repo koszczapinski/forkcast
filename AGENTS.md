@@ -30,17 +30,18 @@ AI meal planner. The product is not built yet. This file is the short map for Cl
 
 ## Issue lifecycle
 
-Labels are the state machine. Names, colors, and descriptions live in `.github/labels.yml`.
+Labels are the state machine. Names, colors, and descriptions live in `.github/labels.yml`. The steps are in `docs/workflow.md`.
 
 1. A new feature or bug opens with `needs-spec` (and `type:feature` or `type:bug`).
 2. The owner approves the spec and adds `spec:approved`.
-3. The owner, and only the owner, adds `agent:ready` when an agent may start. `agent:cursor` or `agent:claude` marks which tool.
-4. The agent opens a PR. A human merges.
+3. The owner, and only the owner, adds `agent:ready`. `agent:cursor` or `agent:claude` marks which tool.
+4. The agent writes tests from the spec. The read-only reviewer checks them. On pass it locks the tests and implements in the same run. `risk:high` stops after the red tests and waits for the owner.
+5. The agent opens a PR. The owner merges.
 
-Agents never add or remove `agent:ready`, `spec:approved`, or `risk:*`, and never merge. Do not start implementation unless the owner has set both `spec:approved` and `agent:ready`.
+Agents never add or remove `agent:ready`, `spec:approved`, or `risk:*`, and never merge. Do not start unless the owner has set both `spec:approved` and `agent:ready`.
 
 - Bugs use `type:bug` and start with a regression test that fails on `main`.
-- `risk:high` means the PR touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, schemas, dependencies, or secrets. Say so in the PR. The owner applies the label.
+- `risk:high` is the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, auth, payments, schemas, dependencies, or secrets. Name it in the PR. The owner applies the label.
 - `risk:low` is a small, well-tested product change. The owner applies that label too.
 
 ## Titles
@@ -56,22 +57,20 @@ The summary is short and imperative, with no trailing period. The pull request t
 ## Workflow
 
 - Product work starts from `docs/specs/<issue-number>-<slug>.md`, in the same section order as the issue form (`docs/specs/TEMPLATE.md`). No spec, no code. `/issue` may draft the GitHub issue first, and creates it only after the user confirms.
-- Plan first. Wait for a human to approve the plan. Then tests, then code.
-- One plan step at a time. No drive-by refactors.
-- Tests first: run the new tests and show they fail for the right reason (missing behaviour, not a typo or a bad import).
-- After the human approves the tests: commit `test: <ticket>` and create `.claude/tests.lock` (gitignored).
-- While that lock exists, approved tests are a contract. Do not edit or weaken them. If a test looks wrong, stop and ask.
-- Bug fixes start with a regression test that fails on `main`, then the fix. Same contract after approval.
+- After `agent:ready`, `/tdd` writes tests from the spec and shows they are red for the right reason. The reviewer must pass before `.claude/tests.lock`. Default work then implements in the same run. The `risk:high` exception, model split, and night queue are in `docs/workflow.md`.
+- One step at a time. No drive-by refactors.
+- While the lock exists, approved tests are a contract. Change one only together with a spec change the owner approved.
+- Bug fixes start with a regression test that fails on `main`, then the fix.
 - Purely visual UI: do not force a unit test. Name the browser check instead.
-- Remove `.claude/tests.lock` only at the end of `/pr-ready`, after the reviewer passes.
-- A human merges. Agents do not merge.
+- Remove `.claude/tests.lock` at the end of `/pr-ready`, or earlier after the owner approves a spec change the tests must follow. While the lock exists, the hook blocks test edits. The steps are in `docs/workflow.md`.
+- The owner merges. Agents do not merge.
 
 ## Definition of done
 
 - The spec's acceptance criteria are implemented and covered by the approved tests.
 - `pnpm check` exits 0. For a user-facing flow, `pnpm e2e` or a named manual check is in the PR.
-- The diff does not edit approved test files.
-- PR title matches the issue title. The body contains `Closes #N` and the sections Spec, What changed, Evidence, Dlaczego tak, Risk, Out of scope.
+- The diff does not edit approved test files unless the owner approved a spec change that those tests follow.
+- PR title matches the issue title. The body contains `Closes #N` and the sections Spec, What changed, Evidence, Why, Risk, Out of scope.
 
 ## Structure
 
@@ -81,6 +80,7 @@ The summary is short and imperative, with no trailing period. The pull request t
 - `src/test/msw` — MSW server for component tests. Register handlers in the test with `server.use`.
 - `e2e` — Playwright. Not part of `pnpm check`.
 - `docs/specs` — one spec per ticket.
+- `docs/tech-stack.md` — approved libraries.
 - `.claude` — hooks, skills (`/issue`, `/spec`, `/tdd`, `/pr-ready`), read-only reviewer. Cursor's `/issue` entry points at the Claude skill.
 - `.cursor` — the same gates, adapted to Cursor's hook protocol.
 - `.github/labels.yml` — workflow label catalog.
@@ -89,6 +89,7 @@ The summary is short and imperative, with no trailing period. The pull request t
 
 - TypeScript strict. The `@/` alias is `src/`.
 - Package manager is pnpm. Do not add an npm or yarn lockfile.
+- Do not add a dependency that `docs/tech-stack.md` does not allow unless the owner explicitly approves it. Adding one is `risk:high`.
 - Test behaviour, not markup snapshots. Colocate unit tests as `*.test.ts` or `*.test.tsx`.
 - Component tests use Testing Library and `src/test/msw/server.ts`.
 - Named exports for functions and components. Default export only for Next.js pages and layouts.
@@ -98,7 +99,8 @@ The summary is short and imperative, with no trailing period. The pull request t
 
 - Next.js 16 differs from older training data. Read `node_modules/next/dist/docs/` before using an unfamiliar API. Leave the generated block at the top of this file in place.
 - `pnpm check` runs `next typegen` before `tsc` because `next-env.d.ts` is not committed.
-- The Stop hook runs `pnpm check` only while `.claude/tests.lock` exists. A red suite before approval is expected, so the agent can stop and ask.
+- The Stop hook runs `pnpm check` only while `.claude/tests.lock` exists, so the red test-first step is not forced green early.
+- Commands and CI run tests. Do not read a full log. Hooks return failures only (`docs/workflow.md`).
 - Hooks are bash. They need `bash` on `PATH` (macOS, Linux, or Git Bash) and they read JSON from stdin.
 - PreToolUse cannot see every shell redirect. Do not bypass the test lock with a shell command. If you think you must, stop and ask.
 - `.env*` is gitignored, and Claude is denied reads of those files. Do not print secrets.

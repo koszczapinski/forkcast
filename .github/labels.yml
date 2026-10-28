@@ -41,4 +41,4 @@
 
 - name: risk:high
   color: "b60205"
-  description: Touches harness, CI, AI prompts, schema, deps or secrets; owner review required
+  description: Harness, AI prompts, auth, payments, schemas, dependencies, or secrets; owner review required
