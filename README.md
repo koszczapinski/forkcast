@@ -2,21 +2,19 @@
 
 Forkcast is an AI meal planner. You tell it what you eat and what you cannot eat. It drafts a week of meals and a shopping list grouped for the shop.
 
-The planner itself is the next piece of work. This repository is the harness it will be built in: one process, shared by Claude Code and Cursor, where a person approves the spec, the plan, and the tests, and a hook decides when the agent is allowed to stop.
+The planner itself is the next piece of work. This repository is the harness it will be built in: one process, shared by Claude Code and Cursor. The owner approves the spec and the merge. After `agent:ready`, the agent writes tests, a read-only reviewer checks them, and implementation continues in the same run. `risk:high` work still waits for the owner to approve the tests. A hook decides when the agent is allowed to stop.
 
 ## The workflow
 
 ```mermaid
 flowchart TD
-  ticket[Ticket] --> spec[Spec with acceptance criteria]
-  spec --> plan[Plan, approved by a person]
-  plan --> tests[Tests first, failing for the right reason]
-  tests --> lock[Approved tests are locked]
-  lock --> impl[Small implementation steps]
+  ticket[Ticket] --> spec[Spec approved by the owner]
+  spec --> tests[Tests, checked by the reviewer]
+  tests --> impl[Implementation]
   impl --> gate{pnpm check}
   gate -->|Red| impl
   gate -->|Green| review[Read-only reviewer]
-  review --> pr[Pull request, human merges]
+  review --> pr[Pull request, owner merges]
 ```
 
 Labels on the issue are the state machine: `needs-spec`, then `spec:approved`, then `agent:ready` (the owner sets that last one), then a pull request. Agents do not merge. Issue and pull request titles look like `feat: Meal preferences form`. The pull request body contains `Closes #N`.

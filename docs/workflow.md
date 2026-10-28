@@ -2,34 +2,41 @@
 
 Forkcast is an AI meal planner: preferences and allergies in, a weekly plan and a shopping list out. The product features are not in the repo yet. What is here is the process used to build them, the same way in Claude Code and in Cursor.
 
-The model writes code. The harness decides when the work is allowed to count as done. A person approves the spec, the plan, the tests, and the merge.
+The model writes code. The harness decides when the work is allowed to count as done. The owner approves the spec and the merge. After `agent:ready`, the reviewer accepts the tests and the agent implements in the same run. `risk:high` work still waits for the owner to approve the tests.
 
 ## The cycle
 
 ```mermaid
 flowchart TD
-  ticket[Ticket] --> spec[Spec with acceptance criteria]
-  spec --> plan[Plan]
-  plan --> approvePlan{Human approves the plan?}
-  approvePlan -->|No| plan
-  approvePlan -->|Yes| tests[Tests first, failing for the right reason]
-  tests --> approveTests{Human approves the tests?}
-  approveTests -->|No| tests
-  approveTests -->|Yes, lock the tests| impl[Small implementation steps]
-  impl --> gate{Stop hook: pnpm check}
-  gate -->|Red, exit 2| impl
-  gate -->|Green| review[Read-only reviewer]
-  review --> pr[Pull request]
-  pr --> human[Human merges]
+  ticket[Ticket] --> spec[Spec]
+  spec --> ready["Owner: spec:approved, then agent:ready"]
+  ready --> tests[Tests red for the right reason]
+  tests --> testReview{Reviewer on the tests}
+  testReview -->|Fail, round left| tests
+  testReview -->|Fail, two rounds used| report[Stop and report]
+  testReview -->|Pass, risk high| draft[Draft PR and wait]
+  testReview -->|Pass| impl[Lock tests and implement]
+  draft -->|Owner approves the tests| impl
+  impl --> gate{pnpm check}
+  gate -->|Red| impl
+  gate -->|Green| diffReview[Reviewer on the diff]
+  diffReview --> pr[Pull request]
+  pr --> merge[Owner merges]
 ```
 
-1. **Issue, then spec.** `/issue` turns a rough description into a GitHub Issue Form draft and, after the user confirms, opens it with only `type:*` and `needs-spec`. `/spec` copies that issue into `docs/specs/<issue-number>-<slug>.md`, in the same section order. If the criteria cannot be tested yet, the agent asks (at most three questions) instead of guessing.
-2. **Plan.** The agent reads the code and lists steps, files, and tests. It does not edit. A person edits the plan before any code.
-3. **Tests first.** `/tdd` writes tests from the acceptance criteria and runs them. They must fail because the behaviour is missing, not because of a typo. A person accepts that commit (`test: ...`) and the agent creates `.claude/tests.lock`.
-4. **Small steps.** One plan step at a time. While the lock file exists, a PreToolUse hook blocks edits to test files.
-5. **Quality gate.** When the agent tries to stop, a hook runs `pnpm check` (types, lint, unit tests). Red: the hook returns exit 2 and the agent keeps working. The gate stays off until the lock exists, because a red suite is the point of the test-first step.
-6. **Review.** A subagent that did not write the code, and that cannot edit, checks the diff against the spec. Then a person reads the diff.
-7. **Pull request.** `/pr-ready` fills in the PR from the spec and the command output. The PR title is the issue title. The body contains `Closes #N`. A person merges.
+1. **Issue, then spec.** `/issue` turns a rough description into a GitHub Issue Form draft and, after the user confirms, opens it with only `type:*` and `needs-spec`. `/spec` copies that issue into `docs/specs/<issue-number>-<slug>.md`, in the same section order. If the criteria cannot be tested yet, the agent asks (at most three questions) instead of guessing. The owner approves that spec (`spec:approved`) and later sets `agent:ready`. There is no separate plan approval.
+2. **Tests first.** `/tdd` writes tests from the acceptance criteria and runs them. They must fail because the behaviour is missing, not because of a typo or a bad import. The agent keeps the failure summary and does not read the full log. The read-only reviewer then checks the tests against the spec: every criterion has a test, the tests are red for the right reason, and they assert behaviour rather than implementation. The reviewer returns pass or fail.
+3. **Reviewer pass, default.** The agent commits `test: <short imperative summary>`, creates `.claude/tests.lock` (gitignored; one line, the spec path), and implements in the same run. It does not wait for the owner.
+4. **Reviewer fail.** The agent fixes the tests and asks the reviewer again. At most two fix rounds. If the reviewer still fails, the agent stops and reports the gaps. It does not create the lock and does not implement.
+5. **`risk:high` exception.** Work that touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, auth, payments, schemas, dependencies, or secrets keeps the two-phase flow. After the reviewer passes the red tests, the agent commits them, opens a draft pull request, and stops. The owner approves the tests. Only then does the agent create the lock and implement. The agent names `risk:high` in the pull request and does not apply the label.
+6. **Small steps.** One step at a time. While the lock file exists, a PreToolUse hook blocks edits to test files.
+7. **Quality gate.** When the agent tries to stop, a hook runs `pnpm check` (types, lint, unit tests). Red: the hook returns exit 2 and only the failure lines, and the agent keeps working. The gate stays off until the lock exists, so the red test-first step is not forced green early.
+8. **Review the diff.** The same read-only reviewer checks the implementation against the spec. It fails the diff when a test file changed and the spec did not.
+9. **Pull request.** `/pr-ready` opens the pull request. The title is the issue title. The body contains `Closes #N`. If a draft already exists, update that pull request and mark it ready. The owner merges.
+
+An approved test changes only together with a spec change the owner has approved. While `.claude/tests.lock` exists, the hook still refuses test edits. After the owner approves the spec change, the tests may be updated to match that spec, and the reviewer checks them again. A test change with no spec change is a fail.
+
+Agents never add or remove `agent:ready`, `spec:approved`, or `risk:*`, and they never merge.
 
 ## Issue labels
 
@@ -44,11 +51,11 @@ Labels are a state machine, not sticky notes. The catalog is `.github/labels.yml
 | `type:feature`, `type:bug`, `type:chore` | Templates, owner | Kind of work                                        |
 | `risk:low`, `risk:high`                  | Owner            | How carefully a human should review the PR          |
 
-The path is `needs-spec`, then `spec:approved`, then `agent:ready`, then a PR, then a human merge. Agents never add or remove `agent:ready`, `spec:approved`, or `risk:*`, and they never merge.
+The path is `needs-spec`, then `spec:approved`, then `agent:ready`, then tests, then a pull request, then the owner merges. Agents never add or remove `agent:ready`, `spec:approved`, or `risk:*`, and they never merge.
 
-`agent:ready` is the owner's switch. An instruction in a prompt can be ignored. A label the agent is forbidden to set cannot be switched on by the same agent that wants to start coding. That is the same idea as the test lock: the phase change is a human action.
+`agent:ready` is the owner's switch. An instruction in a prompt can be ignored. A label the agent is forbidden to set cannot be switched on by the same agent that wants to start coding. That is the same idea as the test lock: the phase change is a human action. After that switch, the default run does not stop again for the owner until merge. `risk:high` is the exception, and it stops for test approval.
 
-`risk:high` is for a PR that touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, schemas, dependencies, or secrets. `risk:low` is a small, well-tested product change. The agent names the risk in the PR. The owner applies the label.
+`risk:high` is for a pull request that touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, auth, payments, schemas, dependencies, or secrets. `risk:low` is a small, well-tested product change. The agent names the risk in the pull request. The owner applies the label. The agent decides which flow to use from that list, before the label exists.
 
 A bug is `type:bug`. The first commit is a regression test that fails on `main`.
 
@@ -76,16 +83,42 @@ CI rejects any other pull request title. The check is `scripts/check-pr-title.mj
 
 Instructions (`AGENTS.md`, skills) can be interpreted loosely. Hooks run even when the model would rather skip them.
 
-| Always                                     | Where                                          |
-| ------------------------------------------ | ---------------------------------------------- |
-| Lint the file that was just edited         | PostToolUse hook                               |
-| Refuse edits to approved tests             | PreToolUse hook plus `.claude/tests.lock`      |
-| Refuse to finish while `pnpm check` is red | Stop hook, exit 2                              |
-| Reviewer cannot edit                       | `tools: Read, Grep, Glob` and `readonly: true` |
-| Secrets stay unread                        | Claude deny rules for `.env` and `.env.*`      |
-| Merge                                      | A person, after CI                             |
+| Always                                     | Where                                                        |
+| ------------------------------------------ | ------------------------------------------------------------ |
+| Lint the file that was just edited         | PostToolUse hook                                             |
+| Refuse edits to approved tests             | PreToolUse hook plus `.claude/tests.lock`                    |
+| Refuse to finish while `pnpm check` is red | Stop hook, exit 2                                            |
+| Return only failures                       | Stop hook prints failure lines; success is silent            |
+| Reviewer cannot edit                       | `tools: Read, Grep, Glob`, `readonly: true`, `model: haiku`  |
+| Secrets stay unread                        | Claude deny rules for `.env` and `.env.*`                    |
+| Merge                                      | The owner, after CI                                          |
 
 Cursor uses the same scripts. Its stop hook sends a follow-up message instead of using exit 2, because that is how Cursor continues a turn. `loop_limit` stops the loop after five follow-ups. See `.cursor/hooks.json`.
+
+## Models and cost
+
+Use a cheap model for review and for mechanical test writing from a finished spec. Use a strong model for implementation, architecture, hard bugs, and AI prompts.
+
+| Work                                      | Model                                                                 |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| Review of red tests, or of the diff       | Cheap. Claude Code: `model: haiku` in `.claude/agents/reviewer.md`    |
+| Mechanical tests from a finished spec     | Cheap                                                                 |
+| Implementation, architecture, hard bugs   | Strong                                                                |
+| AI prompts                                | Strong, and the work is `risk:high`                                   |
+
+Cursor does not read `model:` from the Claude agent file. In Cursor the model is chosen per agent, when that agent starts. Pick a cheap model for a review agent and for an agent that only writes tests from a finished spec. Pick a strong model for an agent that implements.
+
+`pnpm check` and `pnpm e2e` run the suites. CI runs them again. The model does not read a full passing log. A local run keeps the failure summary only (failing names and assertion errors). Hooks print nothing when the command passes. On failure they return only the failure lines.
+
+## Unattended runs
+
+A night queue takes issues labeled `agent:ready` one at a time. Each issue gets its own pull request. A run opens at most five pull requests, then stops even when more issues are ready.
+
+The run follows `/tdd` and then `/pr-ready` for that issue. It does not wait for a person to type the slash command. The owner already set `agent:ready`.
+
+It stops at the first blocker and does not start the next issue. A blocker is a missing spec, a reviewer fail after two rounds, tests that stay red for the wrong reason, `risk:high` waiting on the owner's test approval, or a red `pnpm check` the agent cannot fix.
+
+Before it stops, it writes the current issue, status, branch, pull request, blocker, and next step into `docs/progress.md`, then commits and pushes that file on the issue branch. The next session reads that file first and resumes the same issue, including one that is still blocked. If nothing is in progress, it takes the lowest `agent:ready` issue number.
 
 ## Tests, with judgment
 
@@ -124,5 +157,5 @@ Not measured yet. Fill this in from real tickets. Do not invent numbers for a RE
 | Specs merged                           | Files under `docs/specs/` besides the template                                    | —     |
 | Tests that failed for the wrong reason | Red runs caused by a typo, a bad import, or the harness                           | —     |
 | Quality-gate blocks                    | Stop-hook runs that exited 2                                                      | —     |
-| Approved tests edited later            | Test files changed after the `test:` commit. Should stay 0 unless a person agreed | —     |
+| Approved tests edited later            | Test files changed after the `test:` commit. Should stay 0 unless the owner approved a spec change | —     |
 | Reviewer findings                      | Gaps the read-only reviewer reported before a person read the diff                | —     |

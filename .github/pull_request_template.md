@@ -18,6 +18,6 @@ Closes #
 
 ## Risk
 
-<!-- `risk:low` or `risk:high`. High when the diff touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, schemas, dependencies, or secrets. Only the owner applies the label. -->
+<!-- `risk:low` or `risk:high`. High when the diff touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, auth, payments, schemas, dependencies, or secrets. Only the owner applies the label. -->
 
 ## Out of scope
