@@ -5,6 +5,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -317,7 +318,7 @@ describe("MealPreferencesForm", () => {
     savePreferences();
 
     expect(localStorage.getItem(STORAGE_KEY)).toBe(saved);
-    expect(servingsField()).toHaveFocus();
+    await waitFor(() => expect(servingsField()).toHaveFocus());
   });
 
   it("focuses the budget field when servings is valid and the budget is not", async () => {
@@ -327,7 +328,7 @@ describe("MealPreferencesForm", () => {
     fireEvent.change(budgetField(), { target: { value: "0" } });
     savePreferences();
 
-    expect(budgetField()).toHaveFocus();
+    await waitFor(() => expect(budgetField()).toHaveFocus());
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
