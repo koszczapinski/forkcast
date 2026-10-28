@@ -31,7 +31,7 @@ flowchart TD
 5. **`risk:high` exception.** Work that touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, auth, payments, schemas, dependencies, or secrets keeps the two-phase flow. After the reviewer passes the red tests, the agent commits them, opens a draft pull request, and stops. The owner approves the tests. Only then does the agent create the lock and implement. The agent names `risk:high` in the pull request and does not apply the label.
 6. **Small steps.** One step at a time. While the lock file exists, a PreToolUse hook blocks edits to test files.
 7. **Quality gate.** When the agent tries to stop, a hook runs `pnpm check` (types, lint, unit tests). Red: the hook returns exit 2 and only the failure lines, and the agent keeps working. The gate stays off until the lock exists, so the red test-first step is not forced green early.
-8. **Review the diff.** The same read-only reviewer checks the implementation against the spec. It fails the diff when a test file changed and the spec did not.
+8. **Review the diff.** The same read-only reviewer checks the implementation against the spec. It fails the diff when a test file changed and the spec did not, and when a new dependency is not allowed by `docs/tech-stack.md`.
 9. **Pull request.** `/pr-ready` opens the pull request. The title is the issue title. The body contains `Closes #N`. If a draft already exists, update that pull request and mark it ready. The owner merges.
 
 An approved test changes only together with a spec change the owner has approved. While `.claude/tests.lock` exists, the hook still refuses test edits. After the owner approves the spec change, the tests may be updated to match that spec, and the reviewer checks them again. A test change with no spec change is a fail.
@@ -55,7 +55,7 @@ The path is `needs-spec`, then `spec:approved`, then `agent:ready`, then tests, 
 
 `agent:ready` is the owner's switch. An instruction in a prompt can be ignored. A label the agent is forbidden to set cannot be switched on by the same agent that wants to start coding. That is the same idea as the test lock: the phase change is a human action. After that switch, the default run does not stop again for the owner until merge. `risk:high` is the exception, and it stops for test approval.
 
-`risk:high` is for a pull request that touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, auth, payments, schemas, dependencies, or secrets. `risk:low` is a small, well-tested product change. The agent names the risk in the pull request. The owner applies the label. The agent decides which flow to use from that list, before the label exists.
+`risk:high` is for a pull request that touches the harness (`.claude`, `.cursor`, `.github`, `AGENTS.md`, `CLAUDE.md`), AI prompts, auth, payments, schemas, dependencies, or secrets. A dependency that `docs/tech-stack.md` does not allow needs the owner's explicit approval before it is added, and that addition is `risk:high`. `risk:low` is a small, well-tested product change. The agent names the risk in the pull request. The owner applies the label. The agent decides which flow to use from that list, before the label exists.
 
 A bug is `type:bug`. The first commit is a regression test that fails on `main`.
 

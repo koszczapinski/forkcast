@@ -24,7 +24,7 @@ Mechanical tests from a finished spec use a cheap model. Implementation uses a s
    - Pass: continue to step 7.
    - Fail: fix the tests and review again. At most two fix rounds. If the reviewer still fails, stop and report the gaps. Do not create `.claude/tests.lock` and do not implement.
 7. On pass:
-   - Default: commit `test: <short imperative summary>`, create `.claude/tests.lock` (gitignored; one line, the spec path), and implement in the same run. Do not wait for the owner.
+   - Default: commit `test: <short imperative summary>`, create `.claude/tests.lock` (gitignored; one line, the spec path), and implement in the same run. Do not wait for the owner. Do not add a dependency that `docs/tech-stack.md` does not allow.
    - `risk:high`: commit the red tests, open a draft pull request, and stop. The title is the issue title. The body contains `Closes #<issue>`, states that the tests are red on purpose, and names `risk:high` without applying the label. Do not create the lock and do not implement until the owner approves the tests. After that approval, create the lock and implement on the same branch.
 
 ```bash

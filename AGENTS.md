@@ -80,6 +80,7 @@ The summary is short and imperative, with no trailing period. The pull request t
 - `src/test/msw` — MSW server for component tests. Register handlers in the test with `server.use`.
 - `e2e` — Playwright. Not part of `pnpm check`.
 - `docs/specs` — one spec per ticket.
+- `docs/tech-stack.md` — approved libraries.
 - `.claude` — hooks, skills (`/issue`, `/spec`, `/tdd`, `/pr-ready`), read-only reviewer. Cursor's `/issue` entry points at the Claude skill.
 - `.cursor` — the same gates, adapted to Cursor's hook protocol.
 - `.github/labels.yml` — workflow label catalog.
@@ -88,6 +89,7 @@ The summary is short and imperative, with no trailing period. The pull request t
 
 - TypeScript strict. The `@/` alias is `src/`.
 - Package manager is pnpm. Do not add an npm or yarn lockfile.
+- Do not add a dependency that `docs/tech-stack.md` does not allow unless the owner explicitly approves it. Adding one is `risk:high`.
 - Test behaviour, not markup snapshots. Colocate unit tests as `*.test.ts` or `*.test.tsx`.
 - Component tests use Testing Library and `src/test/msw/server.ts`.
 - Named exports for functions and components. Default export only for Next.js pages and layouts.

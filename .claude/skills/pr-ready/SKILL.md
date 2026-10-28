@@ -7,7 +7,7 @@ disable-model-invocation: true
 Input: the spec path and the branch name.
 
 1. Run `pnpm check`. Record the exit code. If it is red, read the failure summary only, stop, and fix the code. Do not read or paste the full log. Do not edit approved tests.
-2. Invoke the `reviewer` subagent for the implementation pass, with the spec path and the changed files. If the verdict is fail, stop. A test change with no spec change is a fail.
+2. Invoke the `reviewer` subagent for the implementation pass, with the spec path and the changed files. If the verdict is fail, stop. A test change with no spec change is a fail. A new dependency that `docs/tech-stack.md` does not allow is a fail.
 3. Draft the pull request from `.github/pull_request_template.md`.
    The title is the issue title (`<type>: <summary>`). The body starts with `Closes #<issue>`.
    Sections: Spec, What changed, Evidence (commands and results), Dlaczego tak, Risk, Out of scope.
